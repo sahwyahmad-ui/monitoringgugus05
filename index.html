@@ -1,1 +1,817 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="MONITORING ABSENSI" />
+  <link id="app-manifest-link" rel="manifest" />
+  <link id="favicon-link" rel="icon" type="image/png" href="ICON_KKG_GUGUS_05_TERARA_512x512.png" />
+  <link id="apple-icon-link" rel="apple-touch-icon" sizes="180x180" href="ICON_KKG_GUGUS_05_TERARA_512x512.png" />
+  <title>MONITORING ABSENSI</title>
+  <script>
+    // Penanganan otomatis file logo KKG (.png -> _2.png -> SVG presisi tinggi)
+    window.applyKkgLogoFallback = function(imgEl) {
+      if (!imgEl) return;
+      const step = Number(imgEl.dataset.fallbackStep || "0");
+      if (step === 0) {
+        imgEl.dataset.fallbackStep = "1";
+        imgEl.src = "ICON_KKG_GUGUS_05_TERARA_512x512_2.png";
+        return;
+      }
+      if (step >= 2) return;
+      imgEl.dataset.fallbackStep = "2";
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 260">
+        <defs>
+          <radialGradient id="kkgBlue" cx="50%" cy="42%" r="58%">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="65%" stop-color="#0284c7"/>
+            <stop offset="100%" stop-color="#0369a1"/>
+          </radialGradient>
+        </defs>
+        <circle cx="130" cy="130" r="124" fill="#ffffff" stroke="#000000" stroke-width="5"/>
+        <circle cx="130" cy="130" r="88" fill="url(#kkgBlue)" stroke="#000000" stroke-width="4.5"/>
+        <path id="topArc" d="M 32,130 A 98,98 0 1,1 228,130" fill="none"/>
+        <text font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="18.5" fill="#000000" letter-spacing="0.8">
+          <textPath href="#topArc" startOffset="50%" text-anchor="middle">KELOMPOK KERJA GURU</textPath>
+        </text>
+        <path id="botArc" d="M 24,136 A 106,106 0 0,0 236,136" fill="none"/>
+        <text font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="17.5" fill="#000000" letter-spacing="0.4">
+          <textPath href="#botArc" startOffset="50%" text-anchor="middle">KECAMATAN TERARA-LOTIM</textPath>
+        </text>
+        <polygon points="26,122 29,129 36,129 30,133 32,140 26,136 20,140 22,133 16,129 23,129" fill="#000000"/>
+        <polygon points="234,122 237,129 244,129 238,133 240,140 234,136 228,140 230,133 224,129 231,129" fill="#000000"/>
+        <rect x="42" y="122" width="176" height="44" fill="#ffffff" stroke="#000000" stroke-width="3.5"/>
+        <ellipse cx="130" cy="113" rx="34" ry="8" fill="none" stroke="#ef4444" stroke-width="4.5"/>
+        <path d="M84 64 L84 106 L124 114 L136 114 L176 106 L176 64" fill="none" stroke="#ef4444" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M90 54 L130 66 L130 108 L90 98 Z" fill="#ffffff" stroke="#000000" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M170 54 L130 66 L130 108 L170 98 Z" fill="#ffffff" stroke="#000000" stroke-width="4" stroke-linejoin="round"/>
+        <rect x="124" y="64" width="12" height="5" fill="#ef4444"/>
+        <polygon points="130,71 122,86 126,97 134,97 138,86" fill="#ef4444"/>
+        <circle cx="130" cy="84" r="2.2" fill="#ffffff"/>
+        <path d="M118 49 Q130 41 142 49" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+        <path d="M111 41 Q130 30 149 41" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+        <text x="130" y="144" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="25" fill="#000000">KKG</text>
+        <text x="130" y="160" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="13.5" fill="#000000">GUGUS 05 TERARA</text>
+      </svg>`;
+      imgEl.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+    }
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f1f5f9;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      padding-top: var(--sat);
+      padding-bottom: max(16px, var(--sab));
+    }
+    input, select {
+      font-size: 16px !important;
+    }
+    /* Gaya Tabel ala Google Sheets */
+    .sheet-table {
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    .sheet-table th,
+    .sheet-table td {
+      border-right: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+      white-space: nowrap;
+    }
+    .sheet-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background-color: #f8fafc;
+    }
+    .sheet-table tbody tr:hover td {
+      background-color: #eff6ff !important;
+    }
+    .sheet-sticky-col-1 {
+      position: sticky;
+      left: 0;
+      z-index: 15;
+    }
+    .sheet-sticky-col-2 {
+      position: sticky;
+      left: 38px;
+      z-index: 15;
+      box-shadow: 4px 0 8px -3px rgba(15, 23, 42, 0.14);
+    }
+    .sheet-table thead th.sheet-sticky-col-1,
+    .sheet-table thead th.sheet-sticky-col-2 {
+      z-index: 30;
+    }
+    .sheet-cell-active {
+      outline: 2px solid #059669 !important;
+      outline-offset: -2px;
+      background-color: #ecfdf5 !important;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+  </style>
+</head>
+<body class="min-h-[100dvh] text-slate-800 antialiased flex flex-col">
 
+  <!-- Toast Notifikasi -->
+  <div id="toast-box" style="top: max(16px, calc(var(--sat) + 8px));" class="fixed left-4 right-4 z-50 flex flex-col items-center pointer-events-none space-y-2"></div>
+
+  <!-- Modal Panduan Instalasi Layar Utama (iOS & Android) -->
+  <div id="install-guide-modal" class="fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 animate-fade-in">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <img src="ICON_KKG_GUGUS_05_TERARA_512x512_2.png" onerror="window.applyKkgLogoFallback(this)" alt="Logo KKG" class="w-12 h-12 rounded-2xl bg-white object-contain border border-slate-200 shadow-sm shrink-0" />
+          <div>
+            <h3 id="install-modal-title" class="text-sm font-black text-slate-800">Kirim ke Layar Utama HP</h3>
+            <p class="text-[11px] text-slate-500">KKG Gugus 05 Terara • Tanpa Cari Link</p>
+          </div>
+        </div>
+        <button onclick="window.closeInstallModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <div id="install-modal-steps" class="space-y-3 text-xs text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-100"></div>
+
+      <button onclick="window.closeInstallModal()" class="mt-4 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition">
+        Saya Mengerti
+      </button>
+    </div>
+  </div>
+
+  <!-- Header Utama -->
+  <header class="bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-900 text-white px-4 pt-4 pb-6 rounded-b-3xl shadow-lg">
+    <div class="max-w-4xl mx-auto">
+      <div class="flex items-center gap-3">
+        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white border-2 border-emerald-300/60 shadow-lg flex items-center justify-center overflow-hidden shrink-0">
+          <img src="ICON_KKG_GUGUS_05_TERARA_512x512_2.png" onerror="window.applyKkgLogoFallback(this)" alt="Logo KKG Gugus 05 Terara" class="w-full h-full object-contain" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 rounded-full text-[9px] font-extrabold uppercase tracking-wider whitespace-nowrap">
+            <i class="fa-solid fa-table-cells"></i> Live Google Sheets
+          </span>
+          <h1 class="text-base sm:text-lg font-black leading-snug mt-0.5">Rekapitulasi Kehadiran</h1>
+          <p class="text-[11px] text-emerald-100/90 font-semibold">KKG Gugus 05 Terara • Kec. Terara</p>
+        </div>
+      </div>
+
+      <!-- Bar Tombol Aksi Header (Rapi di Layar HP) -->
+      <div class="mt-3 grid grid-cols-2 gap-2">
+        <button onclick="window.installMonitoringApp()" id="btn-install-app" title="Pasang ke Layar Utama HP" class="px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 active:scale-95 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition shadow-sm">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+          <span>Pasang ke Layar Utama</span>
+        </button>
+        <button onclick="window.refreshAllData(false)" id="btn-refresh" class="px-3 py-2 bg-white/15 hover:bg-white/25 active:scale-95 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+          <i id="refresh-icon" class="fa-solid fa-rotate"></i>
+          <span>Segarkan Data</span>
+        </button>
+      </div>
+
+      <!-- Kontrol Sekolah & Tanggal -->
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div>
+          <label class="block text-[10px] font-bold text-blue-200 uppercase mb-1">Unit Sekolah</label>
+          <select id="school-select" onchange="window.onChangeSchool(this.value)"
+            class="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white font-bold text-xs focus:outline-none focus:bg-slate-900">
+            <option value="">Memuat daftar sekolah...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-blue-200 uppercase mb-1">Tanggal Pantauan</label>
+          <input type="date" id="date-select" onchange="window.onChangeDate(this.value)"
+            class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-xl text-white font-bold text-xs focus:outline-none focus:bg-slate-900" />
+        </div>
+      </div>
+
+      <div class="mt-3 flex items-center justify-between text-[10px] text-blue-200/80">
+        <span id="last-sync-text"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Menghubungkan ke Google Sheets...</span>
+        <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+          <input type="checkbox" id="auto-refresh-toggle" checked onchange="window.toggleAutoRefresh(this.checked)" class="rounded accent-emerald-500 w-3.5 h-3.5" />
+          <span>Auto 30 dtk</span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <!-- Konten Utama -->
+  <main class="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-4 -mt-3 space-y-3">
+
+    <!-- Kartu Ringkasan Statistik -->
+    <section id="stats-grid" class="grid grid-cols-4 gap-2">
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 text-center">
+        <div class="text-[10px] font-bold text-slate-400 uppercase">Pegawai</div>
+        <div id="stat-total" class="text-lg font-black text-slate-800 mt-0.5">0</div>
+      </div>
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-emerald-100 text-center">
+        <div class="text-[10px] font-bold text-emerald-600 uppercase">Hadir</div>
+        <div id="stat-hadir" class="text-lg font-black text-emerald-700 mt-0.5">0</div>
+      </div>
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-amber-100 text-center">
+        <div class="text-[10px] font-bold text-amber-600 uppercase">Izin/DL/S</div>
+        <div id="stat-izin" class="text-lg font-black text-amber-700 mt-0.5">0</div>
+      </div>
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-rose-100 text-center">
+        <div class="text-[10px] font-bold text-rose-600 uppercase">Belum</div>
+        <div id="stat-belum" class="text-lg font-black text-rose-600 mt-0.5">0</div>
+      </div>
+    </section>
+
+    <!-- Pencarian & Filter Tab -->
+    <section class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div class="relative flex-1">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+          </span>
+          <input type="text" id="search-input" oninput="window.renderList()" placeholder="Cari nama pegawai / NIP di sheet..."
+            class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600" />
+        </div>
+        <button onclick="window.exportCsvReport()" title="Download Laporan Excel/CSV" class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 shrink-0 shadow-xs transition">
+          <i class="fa-solid fa-file-excel"></i>
+          <span>Download Excel/CSV</span>
+        </button>
+      </div>
+
+      <!-- Filter Pill -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5" id="filter-pills">
+        <button onclick="window.setFilter('ALL')" data-filter="ALL" class="filter-btn px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-emerald-700 text-white shrink-0">Semua Baris</button>
+        <button onclick="window.setFilter('HADIR')" data-filter="HADIR" class="filter-btn px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 shrink-0">Hadir / Terlambat</button>
+        <button onclick="window.setFilter('IZIN')" data-filter="IZIN" class="filter-btn px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 shrink-0">Izin / Sakit / DL</button>
+        <button onclick="window.setFilter('BELUM')" data-filter="BELUM" class="filter-btn px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 shrink-0">Belum Absen</button>
+      </div>
+    </section>
+
+    <!-- Tampilan Tabel Google Sheets -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-300 overflow-hidden mb-6">
+      <!-- Bar Formula / Info Sheet ala Google Sheets -->
+      <div class="bg-slate-100 border-b border-slate-300 px-3 py-1.5 flex items-center justify-between text-[11px] text-slate-600">
+        <div class="flex items-center gap-2 truncate flex-1">
+          <span id="sheet-cell-ref" class="px-1.5 py-0.5 bg-white border border-slate-300 text-slate-700 font-mono font-bold rounded text-[10px] shrink-0">A1</span>
+          <span class="px-1.5 py-0.5 bg-emerald-700 text-white font-mono font-bold rounded text-[10px] shrink-0">fx</span>
+          <span id="sheet-formula-bar" class="font-mono truncate text-slate-800">Ketuk sel mana saja untuk melihat detail</span>
+        </div>
+        <span class="text-[10px] text-slate-400 shrink-0 ml-2"><i class="fa-solid fa-arrows-left-right mr-1"></i>Geser</span>
+      </div>
+
+      <!-- Kontainer Scroll Tabel -->
+      <div id="attendance-list" class="overflow-x-auto overflow-y-auto max-h-[62vh] bg-white">
+        <div class="p-8 text-center text-xs text-slate-400">
+          <i class="fa-solid fa-spinner fa-spin text-lg text-emerald-600 mb-2 block"></i>
+          Memuat lembar kerja Google Sheets...
+        </div>
+      </div>
+
+      <!-- Tab Lembar Kerja (Sheet Tabs di Bawah ala Google Sheets) -->
+      <div class="bg-slate-100 border-t border-slate-300 px-3 py-1.5 flex items-center justify-between text-[11px]">
+        <div class="flex items-center gap-1.5">
+          <span class="px-2.5 py-1 bg-white border border-slate-300 border-b-emerald-600 border-b-2 rounded-t font-bold text-emerald-800 shadow-2xs">
+            <i class="fa-solid fa-table text-emerald-600 mr-1"></i>Rekap_Harian
+          </span>
+          <span id="sheet-row-count" class="text-[10px] font-semibold text-slate-500 ml-1">0 baris</span>
+        </div>
+        <span class="text-[10px] font-mono text-slate-400">Google Sheets Sync</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // KONEKSI KE GOOGLE APPS SCRIPT / GOOGLE SHEETS PUSAT YANG SAMA
+    // =========================================================================
+    const SERVER_URL = "https://script.google.com/macros/s/AKfycbx1OnWxWVraewrI42glys2JEm96W8ueEa5T20CZrOlNpQsDVi3MIcDtrHOpHqUmgBqt/exec";
+    const STORAGE_KEY = "monitoring_presensi_v1";
+
+    let state = {
+      schoolsList: [],
+      selectedSchool: "",
+      selectedDate: getTodayDateStr(),
+      employees: [],
+      records: [],
+      activeFilter: "ALL",
+      autoRefresh: true
+    };
+
+    let autoRefreshTimer = null;
+    let deferredInstallPrompt = null;
+
+    function getTodayDateStr(dateObj = new Date()) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const d = String(dateObj.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function showToast(msg, type = "info") {
+      const box = document.getElementById("toast-box");
+      if (!box) return;
+      while (box.children.length >= 2) box.firstChild.remove();
+      const el = document.createElement("div");
+      const cls = type === "success"
+        ? "bg-emerald-600 text-white border-emerald-500"
+        : type === "error"
+        ? "bg-rose-600 text-white border-rose-500"
+        : "bg-slate-800 text-white border-slate-700";
+      el.className = `pointer-events-auto px-4 py-2.5 rounded-2xl shadow-lg border text-xs font-bold max-w-sm w-full text-center animate-fade-in ${cls}`;
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = "0";
+        el.style.transition = "opacity 0.25s";
+        setTimeout(() => el.remove(), 250);
+      }, 3000);
+    }
+
+    function setupManifest() {
+      try {
+        const pageUrl = window.location.href.split("#")[0];
+        const iconUrl = new URL("ICON_KKG_GUGUS_05_TERARA_512x512.png", pageUrl).href;
+        const manifest = {
+          id: pageUrl,
+          name: "MONITORING ABSENSI",
+          short_name: "MONITORING ABSENSI",
+          start_url: pageUrl,
+          scope: pageUrl,
+          display: "standalone",
+          background_color: "#ffffff",
+          theme_color: "#064e3b",
+          icons: [
+            { src: iconUrl, sizes: "512x512", type: "image/png", purpose: "any" },
+            { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any" }
+          ]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+        const linkEl = document.getElementById("app-manifest-link");
+        if (linkEl) linkEl.href = URL.createObjectURL(blob);
+      } catch (e) {}
+    }
+
+    async function fetchJson(url) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        return await res.json();
+      } catch (e) {
+        clearTimeout(timer);
+        throw e;
+      }
+    }
+
+    async function loadSchools() {
+      try {
+        const json = await fetchJson(`${SERVER_URL}?action=get_schools&_t=${Date.now()}`);
+        if (json && json.status === "success" && Array.isArray(json.schools)) {
+          state.schoolsList = json.schools;
+          if (!state.selectedSchool && json.schools.length > 0) {
+            state.selectedSchool = json.schools[0];
+          }
+          renderSchoolSelect();
+        }
+      } catch (e) {
+        showToast("Gagal memuat daftar sekolah dari server.", "error");
+      }
+    }
+
+    function renderSchoolSelect() {
+      const sel = document.getElementById("school-select");
+      if (!sel) return;
+      if (state.schoolsList.length === 0) {
+        sel.innerHTML = `<option value="">Tidak ada data sekolah</option>`;
+        return;
+      }
+      sel.innerHTML = state.schoolsList.map(s =>
+        `<option value="${escapeHTML(s)}" ${s === state.selectedSchool ? "selected" : ""}>${escapeHTML(s)}</option>`
+      ).join("");
+    }
+
+    window.refreshAllData = async function(silent = false) {
+      if (!state.selectedSchool) return;
+      const icon = document.getElementById("refresh-icon");
+      if (icon) icon.classList.add("fa-spin");
+
+      try {
+        const [schoolRes, attRes] = await Promise.all([
+          fetchJson(`${SERVER_URL}?action=get_school_data&school=${encodeURIComponent(state.selectedSchool)}&_t=${Date.now()}`),
+          fetchJson(`${SERVER_URL}?action=get_attendance&school=${encodeURIComponent(state.selectedSchool)}&_t=${Date.now()}`)
+        ]);
+
+        if (schoolRes && schoolRes.status === "success" && Array.isArray(schoolRes.employees)) {
+          state.employees = schoolRes.employees.filter(e => e.is_active !== false);
+        }
+        if (attRes && attRes.status === "success" && Array.isArray(attRes.records)) {
+          state.records = attRes.records;
+        }
+
+        const nowTime = new Date().toTimeString().slice(0, 8);
+        const syncEl = document.getElementById("last-sync-text");
+        if (syncEl) {
+          syncEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> Sinkron Google Sheets: <strong>${nowTime}</strong>`;
+        }
+        window.renderList();
+        if (!silent) showToast("Data Google Sheets berhasil disegarkan!", "success");
+      } catch (e) {
+        const syncEl = document.getElementById("last-sync-text");
+        if (syncEl) {
+          syncEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i> Koneksi lambat, menampilkan data terakhir`;
+        }
+        if (!silent) showToast("Gagal menyegarkan data. Periksa internet Anda.", "error");
+      } finally {
+        if (icon) icon.classList.remove("fa-spin");
+      }
+    };
+
+    function getMergedRows() {
+      const targetDate = state.selectedDate || getTodayDateStr();
+      const dayRecords = state.records.filter(r => String(r.date || "").trim() === targetDate);
+
+      const usedRecordIdx = new Set();
+      const merged = state.employees.map(emp => {
+        const empId = String(emp.id || "").trim();
+        const empName = String(emp.name || "").trim().toLowerCase();
+
+        const recIdx = dayRecords.findIndex((r, i) =>
+          !usedRecordIdx.has(i) && (
+            (empId && String(r.employee_id || "").trim() === empId) ||
+            String(r.name || "").trim().toLowerCase() === empName
+          )
+        );
+
+        if (recIdx >= 0) {
+          usedRecordIdx.add(recIdx);
+          const r = dayRecords[recIdx];
+          return {
+            name: emp.name,
+            nip: emp.employee_number || r.nip || "-",
+            position: emp.position || r.position || "Guru",
+            date: targetDate,
+            status: r.status || "Hadir",
+            check_in: r.check_in || "-",
+            check_out: r.check_out || "-",
+            coords: r.koordinat || r.coordinates || r.location || "-"
+          };
+        }
+
+        return {
+          name: emp.name,
+          nip: emp.employee_number || "-",
+          position: emp.position || "Guru",
+          date: targetDate,
+          status: "Belum Absen",
+          check_in: "-",
+          check_out: "-",
+          coords: "-"
+        };
+      });
+
+      // Tambahkan catatan dari Google Sheets jika nama tidak ada di daftar pegawai aktif
+      dayRecords.forEach((r, i) => {
+        if (!usedRecordIdx.has(i)) {
+          merged.push({
+            name: r.name || "Tanpa Nama",
+            nip: r.nip || "-",
+            position: r.position || "Guru",
+            date: targetDate,
+            status: r.status || "Hadir",
+            check_in: r.check_in || "-",
+            check_out: r.check_out || "-",
+            coords: r.koordinat || r.coordinates || r.location || "-"
+          });
+        }
+      });
+
+      return merged;
+    }
+
+    window.selectSheetCell = function(tdEl, cellRef, rawValue) {
+      document.querySelectorAll(".sheet-cell-active").forEach(el => el.classList.remove("sheet-cell-active"));
+      if (tdEl) tdEl.classList.add("sheet-cell-active");
+      const refEl = document.getElementById("sheet-cell-ref");
+      const barEl = document.getElementById("sheet-formula-bar");
+      if (refEl) refEl.textContent = cellRef;
+      if (barEl) barEl.textContent = rawValue || "-";
+    };
+
+    function formatCoordsCell(coords) {
+      const clean = String(coords || "").trim();
+      if (!clean || clean === "-") return `<span class="text-slate-400">-</span>`;
+      const match = clean.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+      if (match) {
+        const mapsUrl = `https://www.google.com/maps?q=${match[1]},${match[2]}`;
+        return `<a href="${mapsUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="inline-flex items-center gap-1 text-blue-600 hover:underline font-semibold">
+          <i class="fa-solid fa-location-dot text-[10px]"></i>
+          <span>${escapeHTML(clean)}</span>
+        </a>`;
+      }
+      return escapeHTML(clean);
+    }
+
+    window.renderList = function() {
+      const allRows = getMergedRows();
+
+      const totalCount = allRows.length;
+      const hadirCount = allRows.filter(r => ["Hadir", "Terlambat"].includes(r.status)).length;
+      const izinCount = allRows.filter(r => ["Izin", "Sakit", "Dinas Luar"].includes(r.status)).length;
+      const belumCount = allRows.filter(r => r.status === "Belum Absen").length;
+
+      document.getElementById("stat-total").textContent = totalCount;
+      document.getElementById("stat-hadir").textContent = hadirCount;
+      document.getElementById("stat-izin").textContent = izinCount;
+      document.getElementById("stat-belum").textContent = belumCount;
+
+      const keyword = String(document.getElementById("search-input")?.value || "").trim().toLowerCase();
+      const filtered = allRows.filter(r => {
+        if (state.activeFilter === "HADIR" && !["Hadir", "Terlambat"].includes(r.status)) return false;
+        if (state.activeFilter === "IZIN" && !["Izin", "Sakit", "Dinas Luar"].includes(r.status)) return false;
+        if (state.activeFilter === "BELUM" && r.status !== "Belum Absen") return false;
+        if (keyword) {
+          const matchName = String(r.name || "").toLowerCase().includes(keyword);
+          const matchNip = String(r.nip || "").toLowerCase().includes(keyword);
+          if (!matchName && !matchNip) return false;
+        }
+        return true;
+      });
+
+      const countEl = document.getElementById("sheet-row-count");
+      if (countEl) countEl.textContent = `${filtered.length} baris ditampilkan`;
+
+      const container = document.getElementById("attendance-list");
+      if (!container) return;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center text-xs text-slate-400">
+            <i class="fa-regular fa-folder-open text-xl mb-1.5 block"></i>
+            Tidak ada baris data yang cocok dengan filter ini.
+          </div>
+        `;
+        return;
+      }
+
+      const bodyRows = filtered.map((r, idx) => {
+        const sheetRowNum = idx + 2;
+        const rowBg = idx % 2 === 1 ? "bg-slate-50/80" : "bg-white";
+        const statusBadge =
+          r.status === "Hadir" ? "bg-emerald-100 text-emerald-800 border-emerald-200" :
+          r.status === "Terlambat" ? "bg-amber-100 text-amber-800 border-amber-200" :
+          r.status === "Belum Absen" ? "bg-rose-50 text-rose-700 border-rose-200" :
+          "bg-indigo-100 text-indigo-800 border-indigo-200";
+
+        return `
+          <tr class="text-[11px] text-slate-700">
+            <td class="sheet-sticky-col-1 bg-slate-100 text-center font-mono text-[10px] font-bold text-slate-500 px-2 py-2 w-[38px] select-none">${sheetRowNum}</td>
+            <td onclick="window.selectSheetCell(this, 'A${sheetRowNum}', '${escapeHTML(r.name)}')" class="sheet-sticky-col-2 ${rowBg} px-2.5 py-2 font-bold text-slate-900 cursor-pointer min-w-[165px]">${escapeHTML(r.name)}</td>
+            <td onclick="window.selectSheetCell(this, 'B${sheetRowNum}', '${escapeHTML(r.status)}')" class="${rowBg} px-2.5 py-2 text-center cursor-pointer">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${statusBadge}">${escapeHTML(r.status)}</span>
+            </td>
+            <td onclick="window.selectSheetCell(this, 'C${sheetRowNum}', '${escapeHTML(r.check_in)}')" class="${rowBg} px-2.5 py-2 font-mono font-bold text-emerald-700 text-center cursor-pointer">${escapeHTML(r.check_in)}</td>
+            <td onclick="window.selectSheetCell(this, 'D${sheetRowNum}', '${escapeHTML(r.check_out)}')" class="${rowBg} px-2.5 py-2 font-mono font-bold text-blue-700 text-center cursor-pointer">${escapeHTML(r.check_out)}</td>
+            <td onclick="window.selectSheetCell(this, 'E${sheetRowNum}', '${escapeHTML(r.nip)}')" class="${rowBg} px-2.5 py-2 font-mono text-slate-600 cursor-pointer">${escapeHTML(r.nip)}</td>
+            <td onclick="window.selectSheetCell(this, 'F${sheetRowNum}', '${escapeHTML(r.position)}')" class="${rowBg} px-2.5 py-2 text-slate-600 cursor-pointer">${escapeHTML(r.position)}</td>
+            <td onclick="window.selectSheetCell(this, 'G${sheetRowNum}', '${escapeHTML(r.date)}')" class="${rowBg} px-2.5 py-2 font-mono text-slate-500 text-center cursor-pointer">${escapeHTML(r.date)}</td>
+            <td onclick="window.selectSheetCell(this, 'H${sheetRowNum}', '${escapeHTML(r.coords)}')" class="${rowBg} px-2.5 py-2 font-mono text-[10px] cursor-pointer">${formatCoordsCell(r.coords)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <table class="sheet-table w-full text-left">
+          <thead>
+            <tr class="text-[10px] font-mono text-slate-500 uppercase">
+              <th class="sheet-sticky-col-1 bg-slate-200/80 text-center px-2 py-1 w-[38px]"></th>
+              <th class="sheet-sticky-col-2 bg-slate-100 text-center px-2.5 py-1">A</th>
+              <th class="text-center px-2.5 py-1">B</th>
+              <th class="text-center px-2.5 py-1">C</th>
+              <th class="text-center px-2.5 py-1">D</th>
+              <th class="text-center px-2.5 py-1">E</th>
+              <th class="text-center px-2.5 py-1">F</th>
+              <th class="text-center px-2.5 py-1">G</th>
+              <th class="text-center px-2.5 py-1">H</th>
+            </tr>
+            <tr class="text-[11px] font-extrabold text-slate-800 bg-emerald-50/90">
+              <th class="sheet-sticky-col-1 bg-slate-200/80 text-center font-mono text-[10px] text-slate-500 px-2 py-2">1</th>
+              <th class="sheet-sticky-col-2 bg-emerald-50 px-2.5 py-2 text-emerald-950">Nama Pegawai</th>
+              <th class="bg-emerald-50 px-2.5 py-2 text-center text-emerald-950">Status</th>
+              <th class="bg-emerald-50 px-2.5 py-2 text-center text-emerald-950">Jam Masuk</th>
+              <th class="bg-emerald-50 px-2.5 py-2 text-center text-emerald-950">Jam Pulang</th>
+              <th class="bg-emerald-50 px-2.5 py-2 text-emerald-950">NIP</th>
+              <th class="bg-emerald-50 px-2.5 py-2 text-emerald-950">Jabatan</th>
+              <th class="bg-emerald-50 px-2.5 py-2 text-center text-emerald-950">Tanggal</th>
+              <th class="bg-emerald-50 px-2.5 py-2 text-emerald-950">Koordinat GPS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${bodyRows}
+            <tr class="text-[11px] font-black bg-emerald-50/80 text-emerald-950">
+              <td class="sheet-sticky-col-1 bg-slate-200 text-center font-mono text-[10px] text-slate-600 px-2 py-2">Σ</td>
+              <td class="sheet-sticky-col-2 bg-emerald-50 px-2.5 py-2">TOTAL REKAP</td>
+              <td class="px-2.5 py-2 text-center">${filtered.length} Pegawai</td>
+              <td class="px-2.5 py-2 text-center text-emerald-700">${filtered.filter(x => x.check_in !== "-").length} Masuk</td>
+              <td class="px-2.5 py-2 text-center text-blue-700">${filtered.filter(x => x.check_out !== "-").length} Pulang</td>
+              <td class="px-2.5 py-2" colspan="4">Hadir: ${hadirCount} • Izin/DL/Sakit: ${izinCount} • Belum Absen: ${belumCount}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    };
+
+    window.onChangeSchool = function(val) {
+      state.selectedSchool = val;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ selectedSchool: val })); } catch (e) {}
+      window.refreshAllData(false);
+    };
+
+    window.onChangeDate = function(val) {
+      state.selectedDate = val || getTodayDateStr();
+      window.renderList();
+    };
+
+    window.setFilter = function(filterKey) {
+      state.activeFilter = filterKey;
+      document.querySelectorAll(".filter-btn").forEach(btn => {
+        if (btn.dataset.filter === filterKey) {
+          btn.className = "filter-btn px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-emerald-700 text-white shrink-0";
+        } else {
+          btn.className = "filter-btn px-3 py-1.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600 shrink-0";
+        }
+      });
+      window.renderList();
+    };
+
+    window.toggleAutoRefresh = function(enabled) {
+      state.autoRefresh = enabled;
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      if (enabled) {
+        autoRefreshTimer = setInterval(() => window.refreshAllData(true), 30000);
+      }
+    };
+
+    window.exportCsvReport = function() {
+      const rows = getMergedRows();
+      if (rows.length === 0) {
+        showToast("Tidak ada data untuk diunduh.", "error");
+        return;
+      }
+      const header = ["No", "Nama Pegawai", "Status", "Jam Masuk", "Jam Pulang", "NIP", "Jabatan", "Tanggal", "Koordinat GPS"];
+      const csvLines = [header.join(",")];
+      rows.forEach((r, idx) => {
+        const line = [
+          idx + 1,
+          `"${String(r.name).replace(/"/g, '""')}"`,
+          `"${String(r.status).replace(/"/g, '""')}"`,
+          `"${String(r.check_in).replace(/"/g, '""')}"`,
+          `"${String(r.check_out).replace(/"/g, '""')}"`,
+          `"${String(r.nip).replace(/"/g, '""')}"`,
+          `"${String(r.position).replace(/"/g, '""')}"`,
+          `"${String(r.date).replace(/"/g, '""')}"`,
+          `"${String(r.coords).replace(/"/g, '""')}"`
+        ];
+        csvLines.push(line.join(","));
+      });
+      const blob = new Blob(["\uFEFF" + csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      const safeSchool = String(state.selectedSchool || "Rekap").replace(/[^a-zA-Z0-9_-]/g, "_");
+      link.download = `Rekap_Presensi_${safeSchool}_${state.selectedDate}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("File Excel/CSV berhasil diunduh!", "success");
+    };
+
+    // =========================================================================
+    // FITUR KIRIM KE LAYAR UTAMA & INSTAL APLIKASI (ANDROID & iOS)
+    // =========================================================================
+    function isIosDevice() {
+      const ua = window.navigator.userAgent || "";
+      const isIpadOS = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+      return /iPhone|iPad|iPod/i.test(ua) || isIpadOS;
+    }
+
+    function isStandaloneMode() {
+      return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    }
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const topBtn = document.getElementById("btn-install-app");
+      if (topBtn) {
+        topBtn.classList.add("animate-pulse");
+      }
+    });
+
+    window.installMonitoringApp = async function() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice && choice.outcome === "accepted") {
+          showToast("Aplikasi Monitoring berhasil dipasang di layar utama HP!", "success");
+          const topBtn = document.getElementById("btn-install-app");
+          if (topBtn) topBtn.classList.add("hidden");
+        }
+        deferredInstallPrompt = null;
+        return;
+      }
+
+      const modal = document.getElementById("install-guide-modal");
+      const titleEl = document.getElementById("install-modal-title");
+      const stepsEl = document.getElementById("install-modal-steps");
+      if (!modal || !stepsEl) return;
+
+      if (isIosDevice()) {
+        if (titleEl) titleEl.textContent = "Pasang di Layar Utama iPhone / iPad";
+        stepsEl.innerHTML = `
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">1</span>
+            <p>Pastikan halaman ini dibuka di aplikasi <strong>Safari</strong> (ketuk ikon Kompas di pojok kanan bawah jika dibuka dari WhatsApp).</p>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">2</span>
+            <p>Ketuk ikon <strong>Bagikan (Share)</strong> <span class="px-1.5 py-0.5 bg-white border border-slate-200 rounded text-blue-600 font-bold"><i class="fa-solid fa-arrow-up-from-bracket text-[10px]"></i></span> di bilah bawah Safari.</p>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">3</span>
+            <p>Pilih <strong>"Tambah ke Layar Utama" (Add to Home Screen)</strong> lalu ketuk <strong>Tambah</strong>.</p>
+          </div>
+        `;
+      } else {
+        if (titleEl) titleEl.textContent = "Instal Aplikasi Monitoring di Android";
+        stepsEl.innerHTML = `
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">1</span>
+            <p>Ketuk ikon <strong>Titik Tiga (⋮)</strong> di pojok kanan atas browser Chrome Anda.</p>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">2</span>
+            <p>Pilih menu <strong>"Tambahkan ke Layar Utama"</strong> atau <strong>"Instal Aplikasi"</strong>.</p>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">3</span>
+            <p>Ketuk <strong>Instal / Tambah</strong> — ikon <strong>MONITORING ABSENSI</strong> akan langsung muncul di layar depan HP Anda.</p>
+          </div>
+        `;
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    };
+
+    window.closeInstallModal = function() {
+      const modal = document.getElementById("install-guide-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    };
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      setupManifest();
+      if (isStandaloneMode()) {
+        const topBtn = document.getElementById("btn-install-app");
+        if (topBtn) topBtn.classList.add("hidden");
+      }
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        if (saved.selectedSchool) state.selectedSchool = saved.selectedSchool;
+      } catch (e) {}
+
+      const dateInput = document.getElementById("date-select");
+      if (dateInput) dateInput.value = state.selectedDate;
+
+      await loadSchools();
+      await window.refreshAllData(true);
+      window.toggleAutoRefresh(true);
+    });
+  </script>
+</body>
+</html>
